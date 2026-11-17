@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Word Arcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&family=Fredoka:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sea:#0f8b8d; --sea-dk:#0a6466; --ink:#143642; --coral:#ec5e4f; --coral-dk:#b83f33;
+  --sun:#ffc857; --sun-dk:#c9932a; --cream:#fff6e5; --paper:#fffdf6; --grass:#3fa34d; --grass-dk:#2f8a3d;
+  --plum:#7b4bb7; --sky:#4aa8e0; --focus:#d3261a; --muted:#5d7780;
+  --ui:"Fredoka","Trebuchet MS",Arial,sans-serif; --read:"Comic Neue","Comic Sans MS",Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--ui);font-weight:500;color:var(--ink);background:var(--cream);overflow:hidden}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;touch-action:manipulation}
+button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--plum);outline-offset:2px}
+.scr{position:fixed;inset:0;display:none}
+.scr.on{display:flex;flex-direction:column}
+.f{color:var(--focus)}
+kbd{font-family:var(--ui);font-size:.55em;opacity:.75;margin-left:.5em;border:1px solid currentColor;border-radius:4px;padding:0 .3em;vertical-align:.2em}
+
+/* ---------- home ---------- */
+#home{overflow:auto}
+.top{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:clamp(10px,2.2vh,22px) clamp(14px,3vw,40px);background:var(--ink);color:#fff}
+.brand{font-weight:700;font-size:clamp(34px,6.5vh,60px);line-height:1;margin-right:auto}
+.brand span{color:var(--sun)}
+.tix{background:var(--sun);color:var(--ink);font-weight:700;font-size:clamp(20px,3.4vh,28px);padding:4px 16px;border-radius:999px;white-space:nowrap}
+.pick{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.pick label{display:flex;flex-direction:column;font-size:14px;color:#b9cdd3;gap:2px}
+.pick select{background:#1f4c5b;border:1px solid #3c6a78;border-radius:8px;padding:6px 8px;font-size:18px;color:#fff;max-width:210px}
+.btn2{background:#1f4c5b;border:1px solid #3c6a78;border-radius:8px;padding:7px 12px;font-size:17px;color:#fff}
+.modeRow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px clamp(14px,3vw,40px);font-size:19px}
+.seg{display:inline-flex;background:#e9dcc3;border-radius:10px;padding:3px;gap:3px;flex-wrap:wrap}
+.seg button{padding:4px 14px;border-radius:8px;font-size:18px}
+.seg button.on{background:var(--ink);color:#fff}
+.booths{flex:1 0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:clamp(10px,2vw,22px);padding:6px clamp(14px,3vw,40px) clamp(14px,3vh,30px);align-content:start}
+.booth{background:var(--paper);border-radius:18px;overflow:hidden;text-align:center;box-shadow:0 6px 0 rgba(20,54,66,.18);display:flex;flex-direction:column;transition:transform .12s}
+.booth:hover{transform:translateY(-4px)}
+.booth:active{transform:translateY(2px)}
+.awn{height:clamp(26px,4.4vh,38px);background:repeating-linear-gradient(90deg,var(--c) 0 28px,#fff 28px 56px);border-bottom:4px solid rgba(20,54,66,.15);
+  -webkit-mask:radial-gradient(circle at 14px 100%,transparent 9px,#000 10px) 0 0/28px 100%;mask:radial-gradient(circle at 14px 100%,transparent 9px,#000 10px) 0 0/28px 100%}
+.booth .ic{font-size:clamp(50px,9.5vh,84px);line-height:1.15;margin-top:4px}
+.booth b{font-size:clamp(22px,3.6vh,30px);font-weight:700;line-height:1.1}
+.booth small{font-size:16px;color:var(--muted);padding:4px 12px 14px;line-height:1.25}
+
+/* ---------- play ---------- */
+.bar{flex:0 0 auto;display:flex;align-items:center;gap:14px;padding:8px clamp(10px,2vw,20px);background:var(--ink);color:#fff}
+.x{width:42px;height:42px;border-radius:10px;background:#1f4c5b;font-size:20px;flex:0 0 auto}
+#gTitle{font-weight:700;font-size:clamp(22px,3.6vh,30px);white-space:nowrap}
+#gInfo{font-size:clamp(16px,2.6vh,21px);color:#b9cdd3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp{flex:1}
+#board{flex:1 1 auto;min-height:0;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:clamp(8px,2vh,18px);gap:1.6vh}
+.big{border-radius:14px;padding:.3em 1em;font-size:clamp(22px,4.2vh,34px);font-weight:700;line-height:1.2;background:var(--sea);color:#fff;box-shadow:0 5px 0 var(--sea-dk)}
+.big:active{transform:translateY(4px);box-shadow:0 1px 0 var(--sea-dk)}
+.big.ok{background:var(--grass);box-shadow:0 5px 0 var(--grass-dk)}
+.big.no{background:var(--sun);color:var(--ink);box-shadow:0 5px 0 var(--sun-dk)}
+.big.alt{background:#e9dcc3;color:var(--ink);box-shadow:0 5px 0 #c8b892}
+.note{font-size:clamp(18px,3vh,24px);color:var(--muted);text-align:center}
+.h2{font-weight:700;font-size:clamp(30px,6vh,54px);line-height:1.05;text-align:center}
+.row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+
+/* read card */
+.ovl{position:fixed;inset:0;background:rgba(20,54,66,.72);display:none;align-items:center;justify-content:center;z-index:30;padding:12px}
+.ovl.on{display:flex}
+.rdCard{background:var(--paper);border-radius:24px;border:6px solid var(--sun);width:min(1100px,100%);height:min(76vh,640px);display:flex;flex-direction:column;padding:clamp(10px,2vh,20px);gap:1vh;animation:pop .22s ease-out}
+@keyframes pop{from{transform:scale(.85);opacity:0}}
+.rdTop{text-align:center;font-weight:700;font-size:clamp(20px,3.4vh,28px);color:var(--sea-dk)}
+#rdBox{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+#rdFit{width:100%;font-family:var(--read);font-weight:700;text-align:center;line-height:1.45;letter-spacing:.015em;word-spacing:.16em}
+.syl{display:inline-block;border-bottom:.07em solid #b8c2d0;padding:0 .04em}
+.sdot{color:#8a94a3;padding:0 .12em}
+
+/* goal kick */
+.pitch{position:relative;flex:1 1 auto;width:100%;border-radius:18px;overflow:hidden;background:repeating-linear-gradient(180deg,#46ad55 0 12.5%,#3fa34d 12.5% 25%);cursor:pointer;min-height:0}
+.goal{position:absolute;left:15%;right:15%;top:7%;height:min(40%,36vw);border:clamp(6px,1.2vh,10px) solid #fff;border-bottom:0;border-radius:6px 6px 0 0;
+  background:linear-gradient(rgba(255,255,255,.35) 2px,transparent 2px) 0 0/100% 18px,linear-gradient(90deg,rgba(255,255,255,.35) 2px,transparent 2px) 0 0/18px 100%,rgba(20,54,66,.25)}
+.keeper{position:absolute;bottom:0;height:78%;transform:translateX(-50%);display:flex;align-items:flex-end;justify-content:center}
+.keeper i{display:block;width:100%;height:100%;background:var(--sun);border-radius:38% 38% 8px 8px;border:3px solid var(--ink);position:relative}
+.keeper i::before{content:"🧤";position:absolute;left:-18%;top:18%;font-size:min(7vh,7vw);font-style:normal}
+.keeper i::after{content:"🧤";position:absolute;right:-18%;top:18%;font-size:min(7vh,7vw);font-style:normal;transform:scaleX(-1)}
+.keeper b{position:absolute;top:-34%;left:50%;transform:translateX(-50%);width:46%;aspect-ratio:1;background:#f2c79b;border:3px solid var(--ink);border-radius:50%}
+.aim{position:absolute;top:calc(7% + min(40%,36vw));transform:translateX(-50%);font-size:min(8vh,8vw);line-height:1;color:var(--coral);-webkit-text-stroke:2px #fff;paint-order:stroke fill}
+.ball{position:absolute;left:50%;top:84%;transform:translate(-50%,-50%);font-size:min(12vh,12vw);line-height:1;transition:left .42s ease-out,top .42s ease-out,font-size .42s ease-out}
+.callout{position:absolute;left:50%;top:60%;transform:translate(-50%,-50%);font-weight:700;font-size:clamp(46px,12vh,110px);color:#fff;-webkit-text-stroke:5px var(--ink);paint-order:stroke fill;white-space:nowrap;animation:pop .3s cubic-bezier(.3,1.7,.5,1);pointer-events:none}
+.dots{display:flex;gap:6px;font-size:clamp(18px,3vh,26px)}
+.hintbar{position:absolute;left:0;right:0;bottom:1.5%;text-align:center;color:#fff;font-size:clamp(18px,3vh,24px);font-weight:700;text-shadow:0 2px 0 rgba(0,0,0,.3);pointer-events:none}
+
+/* four in a row */
+.c4wrap{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;width:100%}
+.c4{display:grid;grid-template-columns:repeat(7,1fr);gap:min(1.2vh,1.2vw);background:var(--sea);padding:min(1.6vh,1.6vw);border-radius:18px;width:min(100%,calc((100vh - 170px) * 7 / 6));aspect-ratio:7/6;box-shadow:0 8px 0 var(--sea-dk)}
+.cell{border-radius:50%;background:var(--cream);position:relative;aspect-ratio:1;min-width:0}
+.cell.p1::after,.cell.p2::after{content:"";position:absolute;inset:0;border-radius:50%;animation:drop .35s cubic-bezier(.4,0,.6,1.4)}
+.cell.p1::after{background:var(--coral);box-shadow:inset 0 -5px 0 var(--coral-dk)}
+.cell.p2::after{background:var(--sun);box-shadow:inset 0 -5px 0 var(--sun-dk)}
+.cell.win::after{outline:5px solid #fff;animation:pulse .5s infinite alternate}
+@keyframes drop{from{transform:translateY(-500%)}}
+@keyframes pulse{to{transform:scale(1.12)}}
+.c4.my .cell.open:hover{background:#ffd9d4}
+.turn{font-weight:700;font-size:clamp(20px,3.4vh,28px);display:flex;align-items:center;gap:10px}
+.chipc{display:inline-block;width:1em;height:1em;border-radius:50%}
+
+/* memory */
+.mem{display:grid;gap:min(1.6vh,1.6vw);width:100%;flex:1 1 auto;min-height:0}
+.mc{border-radius:14px;background:var(--sea);color:#fff;font-size:clamp(30px,7vh,60px);font-weight:700;box-shadow:0 5px 0 var(--sea-dk);display:flex;align-items:center;justify-content:center;padding:6px;min-height:0;overflow:hidden;
+  background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.12) 0 12px,transparent 12px 24px)}
+.mc.up{background:var(--paper);color:var(--ink);box-shadow:0 5px 0 #d8cdb4;font-family:var(--read);animation:flip .25s}
+.mc.done{background:#dff3e2;box-shadow:0 5px 0 #b5d9ba;opacity:.75}
+@keyframes flip{from{transform:rotateY(90deg)}}
+.mc span{line-height:1.15;word-break:normal}
+
+/* balloons */
+.sky{position:relative;flex:1 1 auto;width:100%;min-height:0;border-radius:18px;background:linear-gradient(#bfe6fb,#e9f7ff);display:grid;grid-template-columns:repeat(3,1fr);grid-auto-rows:minmax(0,1fr);gap:1vh 1vw;padding:2vh 2vw 3vh;align-items:center;justify-items:center}
+.bal{height:88%;max-width:92%;aspect-ratio:1/1.12;border-radius:50% 50% 50% 50%/58% 58% 42% 42%;background:var(--c);color:#fff;font-family:var(--read);font-weight:700;display:flex;align-items:center;justify-content:center;position:relative;animation:bob 2.6s ease-in-out infinite alternate;box-shadow:inset -10px -14px 0 rgba(0,0,0,.12);text-shadow:0 2px 0 rgba(0,0,0,.25);padding:0 4%}
+.bal::after{content:"";position:absolute;bottom:-9%;left:50%;width:2px;height:12%;background:#7a8f96}
+.bal:nth-child(2n){animation-delay:-.9s}.bal:nth-child(3n){animation-delay:-1.7s}
+@keyframes bob{to{transform:translateY(-7%) rotate(2deg)}}
+.bal.pop{animation:popb .3s forwards}
+@keyframes popb{50%{transform:scale(1.35)}to{transform:scale(0);opacity:0}}
+.bal.no{opacity:.35;pointer-events:none}
+.shake{animation:shake .35s !important}
+@keyframes shake{25%{transform:translateX(-10px)}50%{transform:translateX(9px)}75%{transform:translateX(-5px)}}
+.flash{font-family:var(--read);font-weight:700;font-size:clamp(34px,8vh,70px);background:var(--paper);border-radius:14px;padding:0 .6em}
+
+/* scramble */
+.built{width:100%;min-height:clamp(70px,16vh,150px);background:var(--paper);border-radius:16px;border:4px dashed #d8cdb4;display:flex;flex-wrap:wrap;gap:.3em .4em;align-items:center;justify-content:center;padding:10px 14px;font-family:var(--read);font-weight:700;font-size:clamp(26px,5.6vh,50px);line-height:1.3}
+.tiles{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;align-content:center;flex:1 1 auto}
+.tile{font-family:var(--read);font-weight:700;font-size:clamp(26px,5.6vh,50px);background:var(--sun);border-radius:12px;padding:.1em .5em;box-shadow:0 5px 0 var(--sun-dk)}
+.tile.used{visibility:hidden}
+.tile.hint{box-shadow:0 0 0 5px var(--coral),0 5px 0 var(--sun-dk)}
+
+/* end card */
+.end{background:var(--paper);border-radius:24px;padding:clamp(16px,4vh,36px);text-align:center;display:flex;flex-direction:column;gap:1.6vh;align-items:center;box-shadow:0 8px 0 rgba(20,54,66,.15);animation:pop .3s}
+.end .won{font-size:clamp(60px,14vh,120px);line-height:1}
+.end .t{font-weight:700;font-size:clamp(34px,7vh,64px);line-height:1}
+.end .tk{font-weight:700;font-size:clamp(26px,5vh,42px);color:var(--coral)}
+#fx{position:fixed;inset:0;pointer-events:none;z-index:40;overflow:hidden}
+.pt{position:fixed;width:12px;height:12px;margin:-6px;border-radius:3px}
+#toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;font-weight:700;font-size:20px;padding:8px 22px;border-radius:12px;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none}
+#toast.on{opacity:1}
+
+/* editor */
+#edit{overflow:auto;background:var(--cream)}
+.ed{width:min(940px,100%);margin:0 auto;padding:14px clamp(14px,3vw,30px) 60px}
+.edTop{display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:sticky;top:0;background:var(--cream);padding:8px 0;z-index:2}
+.edTop h2{font-weight:700;font-size:34px;margin-right:auto}
+.ed section{background:var(--paper);border-radius:14px;padding:14px 16px;margin-top:12px;box-shadow:0 4px 0 rgba(20,54,66,.1)}
+.ed h3{font-weight:700;font-size:24px}
+.ed .help{color:var(--muted);font-size:17px;margin:2px 0 8px;line-height:1.3}
+.ed label.fl{display:block;font-size:18px;margin:10px 0 4px}
+.ed label.fl span{color:var(--muted);font-size:15px;margin-left:6px}
+.ed input[type=text],.ed textarea,.ed select{width:100%;background:#fff;border:2px solid #d8cdb4;border-radius:8px;padding:7px 10px;font-family:var(--read);font-weight:700;font-size:19px;line-height:1.4}
+.ed select{font-family:var(--ui);font-weight:500}
+.ed textarea{min-height:140px;resize:vertical}
+.erow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.erow select,.erow input{width:auto !important;flex:1 1 200px}
+.eb{background:#e9dcc3;border-radius:8px;padding:8px 14px;font-size:18px}
+.eb.save{background:var(--grass);color:#fff;font-weight:700}
+.eb.danger{color:var(--coral-dk)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+#shareOut{display:none;margin-top:8px;font-family:var(--ui) !important;font-size:14px !important;font-weight:500 !important}
+@media (min-width:1000px){ .booths{grid-auto-rows:minmax(min(52vh,360px),auto)} .booth{justify-content:flex-start} .booth .ic{font-size:clamp(70px,15vh,120px);margin-top:3vh} .booth small{font-size:18px} }
+@media (max-width:700px){ .two{grid-template-columns:1fr} #gInfo{display:none} .sky{grid-template-columns:repeat(2,1fr)} kbd{display:none} }
+@media (prefers-reduced-motion:reduce){ .bal,.cell.win::after{animation:none} }
+</style>
+</head>
+<body>
+
+<section id="home" class="scr on">
+  <header class="top">
+    <div class="brand">Word <span>Arcade</span></div>
+    <div class="tix" id="tixTotal">🎟 0</div>
+    <div class="pick">
+      <label>Reader<select id="selStudent"></select></label>
+      <label>Word set<select id="selSet"></select></label>
+      <button class="btn2" id="toEdit">✎ Edit words</button>
+    </div>
+  </header>
+  <div class="modeRow"><span>What to read:</span><span class="seg" id="modeSeg"></span></div>
+  <div class="booths" id="booths"></div>
+</section>
+
+<section id="play" class="scr">
+  <header class="bar"><button class="x" id="quit" title="Back to the arcade">✕</button><div id="gTitle"></div><div id="gInfo"></div><div class="sp"></div><div class="tix" id="gTix">🎟 0</div></header>
+  <div id="board"></div>
+</section>
+
+<div class="ovl" id="rd"><div class="rdCard">
+  <div class="rdTop" id="rdTop">Read it out loud</div>
+  <div id="rdBox"><div id="rdFit"></div></div>
+  <div class="row"><button class="big no" id="rdNo">✗ Not yet<kbd>X</kbd></button><button class="big alt" id="rdSplit">Split<kbd>S</kbd></button><button class="big ok" id="rdOk">✓ Read it!<kbd>Space</kbd></button></div>
+</div></div>
+
+<section id="edit" class="scr"><div class="ed" id="ed"></div></section>
+<div id="fx"></div><div id="toast"></div>
+
+<script>
+/* Built-in word sets (the same ones as Fast Track). Change them in the game with ✎ Edit words. */
+const STARTER = {
+  id:'oi-oy', name:'OI and OY', focus:'oi, oy',
+  words:['boy','toy','joy','coin','coil','boil','soil','foil','noise','moist','spoil','point','joint','broil','soiled',
+    'en-joy','cow-boy','tom-boy','bus-boy','joy-ful','joy-less','joy-ride','de-stroy','em-ploy','re-coil','re-join','de-void',
+    'loy-al','nois-y','point-y','oil-y','toy-ing','joint-ed','broil-er','an-noyed','em-ployed',
+    'boil-ing','broil-ing','toil-ing','coil-ing','join-ing','spoil-ing','moist-ness',
+    'en-joy-ment','en-joy-ing','joy-ful-ly','dis-ap-point','de-stroy-a-ble'],
+  phrases:['father can point','color the coin','father and boy','a joyful color','color the toy','father will enjoy',
+    'color the foil','father enjoys it','father has toys','color and joy','father will boil','color the soil',
+    'in the moist soil','a loyal horse','the boiled corn','lots of coins','noisy games','his loyal dog'],
+  sentences:['The boy put a coin / in the soil.','We enjoy the toy / that makes noise.','Roy will boil the water / in a pot.',
+    'Do not spoil / the moist soil.','The cowboy has / a loyal horse.','The chest has / lots of coins.',
+    'Plant the seeds / in the soil.','Did he plant / soy beans?','We enjoyed / the boiled corn.',
+    'The girl is playing / with a toy.','The boy is digging / in the soil.','Lots of noisy games / made it fun.',
+    'He was very annoyed / with himself.','He employed the help / of his loyal dog, Troy.'],
+  stories:[
+    {title:'The Coin', text:'Roy is a good boy. He found a coin in the soil. Wet, moist dirt was on it. Roy did not spoil it. He gave the coin to his mom with joy. His mom was so glad. She said, "What a loyal boy!"'},
+    {title:'The Toy', text:'Joy has a new toy. The toy makes a loud noise. She likes to play with it in the yard. Her boy dog runs to the noise. Joy and the dog both enjoy the toy.'},
+    {title:'The Lost Coin', text:'Royce was enjoying his birthday party. Lots of noisy games made it fun. He felt joyful as he opened his presents. There were colorful toys scattered all over the floor. But when his father handed him a small box, Royce gasped in surprise. Inside was not a toy but a shiny gold coin! "This used to belong to your grandpa," his father said joyfully. "Keep this coin in a safe spot." The next day after his party, Royce woke up feeling funny. He was forgetting something, but he could not remember what. Then it hit him. The coin! He reached into his pocket, but it was empty. Royce lost the coin. He was very annoyed with himself for not being more careful with it. His day was spoiled. He did not want to tell his father about the lost coin. He did not want to disappoint him. Royce began looking for the coin. First, he checked under the sofa, where they played a noisy hide-and-seek game. Next, Royce looked near the picnic table where they had enjoyed broiled hot dogs. He spotted some shiny foil but no coin. Then, he employed the help of his loyal dog, Troy. But even Troy could not find the coin. With a sigh, he checked the garden. The soil was soft from the rain. As Royce kicked at the dirt, feeling more and more annoyed, Troy started digging nearby, making soil fly up in the air. Royce saw a gleam in the soil where Troy had been digging. There it was, his golden coin! Royce let out a cry of pure joy. "Troy, you are the best dog," he shouted. His day was not spoiled after all.'}
+  ]
+};
+/* OU and OW set - from Lesson 2 of Learn to Read and Write: Diphthongs.
+   skip = words where the red letters do NOT say /ow/ (country, should, snow...), so they stay black. */
+const OUOW = {
+  id:'ou-ow', name:'OU and OW', focus:'ou, ow',
+  skip:'country, should, would, could, you, your, thought, through, snow, show, grow, low, throw, know, blow, window, pillow, followed',
+  words:['out','pout','loud','cloud','shout','cow','mouse','round','crowd','noun','proud','down','brown','sound','found','pound','scout','ground','house','plow','owl','frown','gown','town','clown','crown','couch','howl','count','snout',
+    'snow','show','grow','throw','know','blow',
+    'a-bout','a-round','with-out','cloud-y','loud-ly','loud-er','tow-el','tow-er','cow-er','sound-ed','pouch-es','flour-y','count-ing','grouch-y','clown-ing','prowl-er','scowl-ed','cow-boy','howl-ing','flow-er','show-er','crowd-ed','pound-ed','coun-ter','moun-tain','boun-ty','town-house','win-dow','pil-low',
+    'cow-er-ing','me-ow-ing','boun-ti-ful'],
+  phrases:['should go out','the country town','should we shout','our country house','country cows','should sit down',
+    'a country mouse','should look down','the country crowd','should we plow','country ground','should shout loudly',
+    'in the ground','a hot shower','the rain clouds','a small house','a loud shout','a round red nose','a big brown hat','a brown owl','a gold crown','down a brown dirt path'],
+  sentences:['The cow is out now.','The dog can dig / in the ground.','The girl shouted loudly.','She will take / a hot shower.',
+    'The rain clouds / are here.','The queen has a crown.','It is a small house.','The dog sat down / on our couch.',
+    'The sound is too loud.','The king was proud / of his crown.','I can see the clouds / from the window.',
+    'A clown has / a big red nose.','The plant will grow tall.','Sit down / on the soft rug.','I can throw the ball / to you.',
+    'The king has / a gold crown.','Do you know / the way home?','We saw a brown owl / in the tree.','The wind will blow / the leaf away.'],
+  stories:[
+    {title:'The Clown', text:'A clown came to our town. He had a round red nose and a big brown hat. The kids let out a loud shout. The clown did a funny bow and did not frown. It was fun to see the clown.'},
+    {title:'Town Mouse and Country Mouse, Part 1', text:'One day, the town mouse visited her friend, the country mouse, at his bountiful farm. The country mouse put out a meal of roots and nuts for them to eat around supper time. The town mouse looked at the food in disgust. She said, "This food is not good to eat. You should come to visit me in town. I have cake and meat to eat each day." The country mouse thought this sounded great. So he went to visit the town mouse. The country mouse followed his proud friend down a brown dirt path. "How much farther to town?" he asked with a frown. His little feet were becoming sore. "Not long now," replied the town mouse. "Look, you can see the clouds above the townhouses!" The country mouse gazed up at the crowded buildings. There were so many houses all around! He had never seen such a loud place with so many sounds. The townhouse was indeed grand. Through a small round hole in the wall, they scurried inside. The country mouse gasped at the mountains of food on the counter.'},
+    {title:'Town Mouse and Country Mouse, Part 2', text:'The town mouse snuck about and got a piece of cake and meat for them to eat. "Now," whispered the country mouse, "this bounty is a treat!" They found a cozy spot beneath a flower vase to feast. But as they were eating the feast, a man came stomping into the room, and they had to scurry away without a sound. The country mouse\'s heart pounded with fear. Later, they returned to the meal, but a cat pounced near the table. The country mouse had to hide under a couch to get away. "Ouch!" he cried, bumping his snout on the couch leg. When morning came around, the country mouse bowed to his friend. "Thank you for inviting me to your house in town. However, I cannot sleep when a cat is around. I would rather go without cake than be scared all day." So the country mouse went home. He said, "It is better to eat roots and nuts and be safe than to feast with fear." That night, he sat on his porch, watching the sun go down, feeling proud of his quiet, peaceful house in the country.'}
+  ]
+};
+const BUILTIN=[STARTER,OUOW];
+
+
+const GAMES_INFO=[
+  {id:'kick',  ic:'⚽', c:'#3fa34d', name:'Goal Kick',     sub:'Read it, then take your shot past the keeper.'},
+  {id:'four',  ic:'🔴', c:'#ec5e4f', name:'Four in a Row', sub:'Read to drop a chip. Beat the computer or a friend.'},
+  {id:'mem',   ic:'🃏', c:'#7b4bb7', name:'Memory Match',  sub:'Flip two cards. Read each one. Find the pairs.'},
+  {id:'pop',   ic:'🎈', c:'#4aa8e0', name:'Balloon Pop',   sub:'Listen for the word, then pop the right balloon.'},
+  {id:'mix',   ic:'🧩', c:'#ffc857', name:'Sentence Scramble', sub:'Put the words in order, then read the sentence.'}
+];
+
+/* ---------------- helpers ---------------- */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rnd=n=>Math.floor(Math.random()*n);
+const shuffle=a=>{ a=[...a]; for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]]} return a; };
+const clean=w=>w.replace(/[-·]/g,'');
+const syll=w=>w.split(/[-·]/).filter(Boolean);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const plain=t=>t.replace(/\s*\/\s*/g,' ').trim();
+function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('on'); clearTimeout(toast.h); toast.h=setTimeout(()=>t.classList.remove('on'),2000); }
+
+/* ---------------- storage (shared with Fast Track, so word sets and readers match) ---------------- */
+const KEY='fasttrack_v1';
+function readStore(){ let d=null; try{ d=JSON.parse(localStorage.getItem(KEY)); }catch(e){} return d; }
+function prep(d){
+  if(!d||!Array.isArray(d.sets)) d={sets:[],cur:null,students:['Student 1'],student:'Student 1',records:{},ptr:{},storyIdx:{}};
+  d.known=d.known||d.sets.map(x=>x.id);
+  BUILTIN.forEach(b=>{ if(!d.known.includes(b.id)){ d.known.push(b.id); if(!d.sets.some(x=>x.id===b.id)){ d.sets.push(clone(b)); d.cur=b.id; } } });
+  if(!d.students||!d.students.length) d.students=['Student 1'];
+  if(!d.students.includes(d.student)) d.student=d.students[0];
+  d.play=d.play||{}; d.arc=d.arc||{}; d.arc.mode=d.arc.mode||'mix'; d.arc.tix=d.arc.tix||{};
+  return d;
+}
+let XP={};
+let D=prep(readStore()); save();
+/* only writes the parts the arcade owns, so Fast Track scores are never overwritten */
+function save(){ try{ const cur=prep(readStore()); ['sets','cur','known','students','student','arc'].forEach(k=>cur[k]=D[k]);
+  for(const st in XP){ const p=cur.play[st]=cur.play[st]||{}; p.xp=(p.xp||0)+XP[st]; } XP={}; localStorage.setItem(KEY,JSON.stringify(cur)); }catch(e){} }
+const set=()=>D.sets.find(s=>s.id===D.cur)||D.sets[0];
+const soundOn=()=>!(D.settings&&D.settings.sound===false);
+
+(function importFromLink(){
+  let q=null; try{ q=new URLSearchParams(location.search).get('set'); }catch(e){}
+  if(!q) return;
+  try{ const s=JSON.parse(decodeURIComponent(escape(atob(q.replace(/-/g,'+').replace(/_/g,'/')))));
+    if(s&&s.name&&Array.isArray(s.words)){ s.id=s.id||('s'+Date.now()); ['phrases','sentences','stories'].forEach(k=>{ if(!Array.isArray(s[k])) s[k]=[]; });
+      const i=D.sets.findIndex(x=>x.id===s.id); if(i>=0) D.sets[i]=s; else D.sets.push(s); D.cur=s.id; save(); setTimeout(()=>toast('Loaded: '+s.name),300); } }
+  catch(e){ setTimeout(()=>toast('That lesson link did not load'),300); }
+  try{ history.replaceState(null,'',location.pathname); }catch(e){}
+})();
+
+/* ---------------- text ---------------- */
+function focusRe(){ const f=(set().focus||'').split(/[,\s]+/).filter(Boolean).sort((a,b)=>b.length-a.length);
+  return f.length?new RegExp('('+f.map(x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')+')','gi'):null; }
+const isSkip=w=>(set().skip||'').toLowerCase().split(/[,\s]+/).includes(w.toLowerCase().replace(/^[^a-z]+|[^a-z]+$/g,''));
+function hlRaw(t,re){ if(!re) return esc(t); return t.split(re).map((p,i)=>i%2?`<span class="f">${esc(p)}</span>`:esc(p)).join(''); }
+function hl(t){ const re=focusRe(); if(!re) return esc(t); return t.split(/(\s+)/).map(k=>/^\s*$/.test(k)||isSkip(k)?esc(k):hlRaw(k,re)).join(''); }
+
+/* ---------------- sound + voice ---------------- */
+let ac=null;
+function audio(){ if(!soundOn()) return null; try{ ac=ac||new (window.AudioContext||window.webkitAudioContext)(); if(ac.state==='suspended') ac.resume(); }catch(e){ ac=null; } return ac; }
+function tone(f,d,type='triangle',v=.13,when=0){ const c=audio(); if(!c) return; const o=c.createOscillator(),g=c.createGain(),t=c.currentTime+when; o.type=type; o.frequency.setValueAtTime(f,t); g.gain.setValueAtTime(v,t); g.gain.exponentialRampToValueAtTime(.001,t+d); o.connect(g).connect(c.destination); o.start(t); o.stop(t+d); }
+const sfx={ ok:()=>{tone(660,.06);tone(990,.1,'triangle',.1,.05)}, no:()=>tone(200,.14,'sawtooth',.06), tap:()=>tone(520,.05,'square',.04),
+  win:()=>[523,659,784,1047,1319].forEach((f,i)=>tone(f,.22,'triangle',.14,i*.09)), pop:()=>{tone(900,.05,'square',.07);tone(300,.1,'triangle',.08,.03)}, kick:()=>tone(140,.12,'sine',.25) };
+const canSpeak='speechSynthesis' in window;
+function speak(t){ if(!canSpeak) return; try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.rate=.8; u.lang='en-US'; speechSynthesis.speak(u); }catch(e){} }
+function burst(x,y,n=22){ const cols=['#ffc857','#ec5e4f','#0f8b8d','#7b4bb7','#3fa34d'];
+  for(let i=0;i<n;i++){ const p=document.createElement('i'); p.className='pt'; p.style.left=x+'px'; p.style.top=y+'px'; p.style.background=cols[i%5]; $('#fx').appendChild(p);
+    const a=Math.random()*Math.PI*2,d=70+Math.random()*200; p.animate([{transform:'translate(0,0)',opacity:1},{transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d}px) rotate(${rnd(500)}deg)`,opacity:0}],{duration:600+rnd(400),easing:'cubic-bezier(.2,.8,.4,1)'}).onfinish=()=>p.remove(); } }
+const boom=()=>burst(innerWidth/2,innerHeight*.45,40);
+
+/* ---------------- home ---------------- */
+function show(id){ $$('.scr').forEach(s=>s.classList.toggle('on',s.id===id)); }
+const tixOf=()=>D.arc.tix[D.student]||0;
+function renderHome(){
+  $('#selStudent').innerHTML=D.students.map(s=>`<option ${s===D.student?'selected':''}>${esc(s)}</option>`).join('');
+  $('#selSet').innerHTML=D.sets.map(s=>`<option value="${esc(s.id)}" ${s.id===set().id?'selected':''}>${esc(s.name)}</option>`).join('');
+  $('#tixTotal').textContent='🎟 '+tixOf();
+  $('#modeSeg').innerHTML=[['mix','A mix'],['words','Words'],['phrases','Phrases'],['sentences','Sentences']].map(([v,l])=>`<button data-m="${v}" class="${D.arc.mode===v?'on':''}">${l}</button>`).join('');
+  $('#booths').innerHTML=GAMES_INFO.map(g=>`<button class="booth" data-g="${g.id}" style="--c:${g.c}"><span class="awn"></span><span class="ic">${g.ic}</span><b>${g.name}</b><small>${g.sub}</small></button>`).join('');
+}
+$('#selStudent').addEventListener('change',e=>{ D.student=e.target.value; save(); renderHome(); });
+$('#selSet').addEventListener('change',e=>{ D.cur=e.target.value; save(); renderHome(); });
+$('#modeSeg').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; D.arc.mode=b.dataset.m; save(); renderHome(); });
+$('#booths').addEventListener('click',e=>{ const b=e.target.closest('.booth'); if(b){ audio(); start(b.dataset.g); } });
+$('#toEdit').addEventListener('click',()=>openEditor());
+$('#quit').addEventListener('click',goHome);
+
+/* ---------------- game shell ---------------- */
+let G=null;
+function goHome(){ if(G){ G.dead=true; cancelAnimationFrame(G.raf); clearTimeout(G.h); } G=null; closeRead(); if(canSpeak) try{speechSynthesis.cancel()}catch(e){} renderHome(); show('home'); }
+function start(id){
+  if(!set().words.length&&!set().phrases.length&&!set().sentences.length){ toast('Add words first (✎ Edit words)'); return; }
+  if(G){ G.dead=true; cancelAnimationFrame(G.raf); clearTimeout(G.h); }
+  const info=GAMES_INFO.find(g=>g.id===id);
+  G={id,tix:0,reads:0,first:0,dead:false}; show('play'); $('#gTitle').textContent=info.ic+' '+info.name; $('#gInfo').textContent=''; tix(0);
+  ({kick:kickGame,four:fourGame,mem:memGame,pop:popGame,mix:mixGame})[id]();
+}
+function tix(n){ G.tix+=n; $('#gTix').textContent='🎟 '+G.tix; }
+function later(fn,ms){ const me=G; me.h=setTimeout(()=>{ if(G===me&&!me.dead) fn(); },ms); }
+/* a deck of things to read, following the "What to read" choice */
+function deck(n,force){
+  const S=set(), mode=force||D.arc.mode;
+  const P={words:S.words.map(t=>({k:'w',t})),phrases:S.phrases.map(t=>({k:'p',t:plain(t)})),sentences:S.sentences.map(t=>({k:'s',t:plain(t)}))};
+  let pool = mode==='mix' ? [...shuffle(P.words).slice(0,Math.ceil(n*.4)),...shuffle(P.phrases).slice(0,Math.ceil(n*.3)),...shuffle(P.sentences).slice(0,Math.ceil(n*.3))] : P[mode];
+  if(!pool.length) pool=[...P.words,...P.phrases,...P.sentences];
+  let out=[]; while(out.length<n) out=out.concat(shuffle(pool)); return out.slice(0,n);
+}
+function endGame(emoji,title,lines){
+  const earned=G.tix; D.arc.tix[D.student]=tixOf()+earned;
+  XP[D.student]=(XP[D.student]||0)+earned*10; save();
+  $('#gInfo').textContent='';
+  $('#board').innerHTML=`<div class="end"><div class="won">${emoji}</div><div class="t">${title}</div><div class="tk">+${earned} tickets 🎟</div>
+    ${(lines||[]).concat(G.reads?[`Read ${G.first} of ${G.reads} on the first try`]:[]).map(l=>`<div class="note">${esc(l)}</div>`).join('')}
+    <div class="row"><button class="big ok" id="again">↻ Play again</button><button class="big alt" id="back">Arcade</button></div></div>`;
+  $('#again').onclick=()=>start(G.id); $('#back').onclick=goHome; sfx.win(); boom();
+}
+
+/* ---------------- the read card: read it out loud, then ✓ ---------------- */
+let RD=null;
+function askRead(item,cb,label){
+  RD={item,cb,first:true,split:false};
+  $('#rdTop').textContent=label||'Read it out loud';
+  $('#rdSplit').style.display=item.k==='w'&&syll(item.t).length>1?'':'none';
+  drawRead(); $('#rd').classList.add('on');
+}
+function drawRead(){
+  const it=RD.item, f=$('#rdFit'), box=$('#rdBox');
+  if(it.k==='w'){ const w=clean(it.t), re=isSkip(w)?null:focusRe();
+    f.innerHTML=RD.split?syll(it.t).map(p=>`<span class="syl">${hlRaw(p,re)}</span>`).join('<span class="sdot">·</span>'):hlRaw(w,re); f.style.whiteSpace='nowrap'; }
+  else { f.innerHTML=hl(it.t); f.style.whiteSpace='normal'; }
+  let s=Math.floor(it.k==='w'?Math.min(innerWidth*.14,innerHeight*.24):it.k==='p'?Math.min(innerWidth*.09,innerHeight*.15):Math.min(innerWidth*.07,innerHeight*.115));
+  f.style.fontSize=s+'px';
+  while(s>16&&(f.offsetHeight>box.clientHeight||f.scrollWidth>f.clientWidth+1)){ s-=2; f.style.fontSize=s+'px'; }
+}
+function closeRead(){ $('#rd').classList.remove('on'); RD=null; }
+function readOk(){ if(!RD) return; const r=RD; G.reads++; if(r.first) G.first++; tix(r.first?2:1); sfx.ok(); closeRead(); r.cb(r.first); }
+function readNo(){ if(!RD) return; RD.first=false; sfx.no(); $('#rdTop').textContent='Try it again. Go slow.'; if(RD.item.k==='w'&&syll(RD.item.t).length>1){ RD.split=true; drawRead(); } }
+$('#rdOk').addEventListener('click',readOk); $('#rdNo').addEventListener('click',readNo);
+$('#rdSplit').addEventListener('click',()=>{ if(RD){ RD.split=!RD.split; drawRead(); } });
+
+/* ================= 1. GOAL KICK ================= */
+function kickGame(){
+  const N=8; G.items=deck(N); G.i=0; G.goals=0; G.marks=[];
+  $('#board').innerHTML=`<div class="dots" id="kDots"></div>
+    <div class="pitch" id="pitch"><div class="goal"><div class="keeper" id="keeper" style="left:50%;width:24%"><i><b></b></i></div></div><div class="aim" id="aim">▲</div><div class="ball" id="ball">⚽</div><div class="hintbar" id="kHint"></div></div>`;
+  $('#pitch').addEventListener('click',kickShoot);
+  kickNext();
+}
+function kickDots(){ $('#kDots').innerHTML=Array.from({length:G.items.length},(_,i)=>`<span>${G.marks[i]===undefined?'⚪':G.marks[i]?'⚽':'❌'}</span>`).join(''); $('#gInfo').textContent=`Goals: ${G.goals}`; }
+function kickNext(){
+  kickDots();
+  if(G.i>=G.items.length) return endGame(G.goals>=5?'🏆':'⚽',`${G.goals} goals!`,[]);
+  const b=$('#ball'); b.style.transition='none'; b.style.left='50%'; b.style.top='84%'; b.style.fontSize=''; void b.offsetWidth; b.style.transition='';
+  $$('.callout').forEach(c=>c.remove()); $('#kHint').textContent=''; G.phase='read';
+  later(()=>askRead(G.items[G.i],first=>{ G.power=first; G.phase='aim'; G.t0=performance.now();
+    $('#kHint').textContent=(first?'Power shot! ':'')+'Click or press Space to kick'; kickLoop(); }),350);
+}
+function kickLoop(){
+  if(!G||G.id!=='kick'||G.phase!=='aim') return;
+  const t=(performance.now()-G.t0)/1000;
+  G.ax=.5+.5*Math.sin(t*2.4);                        /* aim arrow, 0..1 across the goal */
+  G.kx=.5+.36*Math.sin(t*(G.power?1.3:1.9)+1.3);     /* keeper */
+  G.kw=G.power?.2:.26;
+  $('#aim').style.left=(15+G.ax*70)+'%';
+  const k=$('#keeper'); k.style.left=(G.kx*100)+'%'; k.style.width=(G.kw*100)+'%';
+  G.raf=requestAnimationFrame(kickLoop);
+}
+function kickShoot(){
+  if(!G||G.id!=='kick'||G.phase!=='aim') return;
+  G.phase='fly'; cancelAnimationFrame(G.raf); sfx.kick();
+  const goal=Math.abs(G.ax-G.kx)>G.kw/2+.03, b=$('#ball');
+  b.style.left=(15+G.ax*70)+'%'; b.style.top=goal?'17%':'24%'; b.style.fontSize='min(6vh,6vw)';
+  later(()=>{ G.marks[G.i]=goal; if(goal){ G.goals++; tix(2); sfx.win(); boom(); } else sfx.no();
+    $('#pitch').insertAdjacentHTML('beforeend',`<div class="callout">${goal?'GOAL!':'Saved!'}</div>`); G.i++; kickDots(); later(kickNext,1100); },450);
+}
+
+/* ================= 2. FOUR IN A ROW ================= */
+function fourGame(){
+  $('#board').innerHTML=`<div class="h2">Four in a Row</div><div class="note">Read to drop a chip. Get four in a line to win.</div>
+    <div class="row"><button class="big" id="vsC">🤖 Play the computer</button><button class="big alt" id="vsP">👥 Two players</button></div>`;
+  $('#vsC').onclick=()=>fourStart(true); $('#vsP').onclick=()=>fourStart(false);
+}
+function fourStart(ai){
+  G.ai=ai; G.grid=Array.from({length:6},()=>Array(7).fill(0)); G.turn=1; G.items=deck(42); G.n=0; G.busy=false; G.over=false;
+  $('#board').innerHTML=`<div class="turn" id="turn"></div><div class="c4wrap"><div class="c4" id="c4">${Array.from({length:42},(_,i)=>`<button class="cell open" data-c="${i%7}" data-r="${Math.floor(i/7)}" aria-label="Column ${i%7+1}"></button>`).join('')}</div></div>`;
+  $('#c4').addEventListener('click',e=>{ const c=e.target.closest('.cell'); if(c) fourPick(+c.dataset.c); });
+  fourTurn();
+}
+function fourTurn(){ const me=G.turn===1; $('#turn').innerHTML=`<span class="chipc" style="background:var(--${me?'coral':'sun'})"></span>${me?'Your turn: pick a column':G.ai?'Computer is thinking…':'Player 2: pick a column'}`; $('#c4').classList.toggle('my',me||!G.ai); }
+const fourRow=(g,c)=>{ for(let r=5;r>=0;r--) if(!g[r][c]) return r; return -1; };
+function fourPick(c){
+  if(G.busy||G.over||(G.ai&&G.turn===2)||fourRow(G.grid,c)<0) return;
+  G.busy=true; sfx.tap();
+  askRead(G.items[G.n++%G.items.length],()=>fourDrop(c),G.turn===1?'Read it to drop your chip':'Player 2: read it to drop your chip');
+}
+function fourDrop(c){
+  const r=fourRow(G.grid,c), p=G.turn; G.grid[r][c]=p;
+  const cell=$(`#c4 .cell[data-r="${r}"][data-c="${c}"]`); cell.classList.add('p'+p); cell.classList.remove('open'); sfx.kick();
+  const w=fourWin(G.grid,p);
+  if(w){ G.over=true; w.forEach(([y,x])=>$(`#c4 .cell[data-r="${y}"][data-c="${x}"]`).classList.add('win')); if(p===1) tix(5);
+    return later(()=>endGame(p===1?'🏆':G.ai?'🤖':'🎉',p===1?'You win!':G.ai?'The computer won this one':'Player 2 wins!',p===1?[]:['Play again to get even.']),1500); }
+  if(G.grid[0].every(v=>v)){ G.over=true; return later(()=>endGame('🤝','It is a tie!',[]),900); }
+  G.turn=3-p; G.busy=false; fourTurn();
+  if(G.ai&&G.turn===2){ G.busy=true; later(()=>{ G.busy=false; fourDrop(fourAI()); },800); }
+}
+function fourWin(g,p){
+  const D4=[[0,1],[1,0],[1,1],[1,-1]];
+  for(let r=0;r<6;r++) for(let c=0;c<7;c++) for(const [dr,dc] of D4){
+    const line=[]; for(let k=0;k<4;k++){ const y=r+dr*k,x=c+dc*k; if(y<0||y>5||x<0||x>6||g[y][x]!==p) break; line.push([y,x]); }
+    if(line.length===4) return line; }
+  return null;
+}
+function fourAI(){
+  const g=G.grid, open=[0,1,2,3,4,5,6].filter(c=>fourRow(g,c)>=0);
+  const tryMove=(c,p)=>{ const r=fourRow(g,c); g[r][c]=p; const w=!!fourWin(g,p); g[r][c]=0; return w; };
+  let m=open.find(c=>tryMove(c,2)); if(m!==undefined) return m;
+  m=open.find(c=>tryMove(c,1)); if(m!==undefined&&Math.random()<.85) return m;
+  const safe=open.filter(c=>{ const r=fourRow(g,c); g[r][c]=2; const bad=r>0&&(()=>{ g[r-1][c]=1; const w=!!fourWin(g,1); g[r-1][c]=0; return w; })(); g[r][c]=0; return !bad; });
+  const pool=safe.length?safe:open, weights=pool.map(c=>4-Math.abs(3-c)+Math.random()*2.5);
+  return pool[weights.indexOf(Math.max(...weights))];
+}
+
+/* ================= 3. MEMORY MATCH ================= */
+function memGame(){
+  const S=set(), usePhr=(D.arc.mode==='phrases'||D.arc.mode==='sentences')&&S.phrases.length>=3;
+  const src=[...new Set(usePhr?S.phrases.map(plain):S.words.map(clean))];
+  if(src.length<3){ toast('Add at least 3 words first'); return goHome(); }
+  const pairs=shuffle(src).slice(0,Math.min(6,src.length)); G.cards=shuffle([...pairs,...pairs]); G.up=[]; G.done=0; G.flips=0; G.lock=false;
+  const cols=G.cards.length>8?4:G.cards.length>6?4:3;
+  $('#board').innerHTML=`<div class="note">Read every card you flip. Find the two that match.</div><div class="mem" id="mem" style="grid-template-columns:repeat(${cols},1fr)">${G.cards.map((c,i)=>`<button class="mc" data-i="${i}">?</button>`).join('')}</div>`;
+  $('#mem').addEventListener('click',e=>{ const b=e.target.closest('.mc'); if(b) memFlip(b); });
+}
+function memFlip(b){
+  const i=+b.dataset.i; if(G.lock||b.classList.contains('up')||b.classList.contains('done')) return;
+  const t=G.cards[i]; b.classList.add('up'); b.innerHTML=`<span>${hl(t)}</span>`; sfx.tap(); G.flips++;
+  let s=parseFloat(getComputedStyle(b).fontSize); const sp=b.firstChild; b.style.fontSize=s+'px';
+  while(s>14&&(sp.scrollWidth>b.clientWidth-10||sp.offsetHeight>b.clientHeight-8)){ s-=2; b.style.fontSize=s+'px'; }
+  G.up.push(b); $('#gInfo').textContent=`Flips: ${G.flips}`;
+  if(G.up.length<2) return;
+  const [a,c]=G.up; G.up=[]; G.lock=true;
+  if(G.cards[+a.dataset.i]===G.cards[+c.dataset.i]){
+    later(()=>{ a.classList.add('done'); c.classList.add('done'); sfx.ok(); tix(2); G.done+=2; G.lock=false; const r=c.getBoundingClientRect(); burst(r.left+r.width/2,r.top+r.height/2,14);
+      if(G.done>=G.cards.length) later(()=>endGame('🃏','All matched!',[`You did it in ${G.flips} flips.`]),700); },500);
+  } else later(()=>{ [a,c].forEach(x=>{ x.classList.remove('up'); x.textContent='?'; x.style.fontSize=''; }); G.lock=false; },1500);
+}
+
+/* ================= 4. BALLOON POP ================= */
+function popGame(){
+  const src=[...new Set(set().words.map(clean))];
+  if(src.length<3){ toast('Add at least 3 words first'); return goHome(); }
+  G.src=src; G.targets=shuffle(src).slice(0,Math.min(10,src.length)); G.i=0; G.hit=0; popRound();
+}
+function popRound(){
+  if(G.i>=G.targets.length) return endGame('🎈',`${G.hit} popped on the first try!`,[]);
+  const t=G.targets[G.i]; G.miss=0;
+  const opts=shuffle([t,...shuffle(G.src.filter(w=>w!==t)).slice(0,5)]), cols=['#ec5e4f','#7b4bb7','#0f8b8d','#e08a1e','#d9488b','#3f7fd1'];
+  $('#gInfo').textContent=`Balloon ${G.i+1} of ${G.targets.length}`;
+  $('#board').innerHTML=`<div class="row" style="align-items:center"><span class="note" id="pSay">${canSpeak?'Listen, then pop the word you hear.':'Look at the word, then find it.'}</span><button class="big" id="pAgain">${canSpeak?'🔊 Say it again':'👁 Show it again'}</button></div>
+    <div class="sky" id="sky">${opts.map((w,i)=>`<button class="bal" data-w="${esc(w)}" style="--c:${cols[i%6]}"><span>${esc(w)}</span></button>`).join('')}</div>`;
+  $$('#sky .bal').forEach(b=>{ let s=Math.min(b.clientWidth*.3,innerHeight*.09); b.style.fontSize=s+'px'; const sp=b.firstChild; while(s>13&&sp.scrollWidth>b.clientWidth*.88){ s-=1; b.style.fontSize=s+'px'; } });
+  const cue=()=>{ if(canSpeak) speak(t); else { const n=$('#pSay'); n.innerHTML=`<span class="flash">${hl(t)}</span>`; later(()=>{ if($('#pSay')) $('#pSay').textContent='Now find it!'; },1400); } };
+  $('#pAgain').onclick=cue; later(cue,400);
+  $('#sky').onclick=e=>{ const b=e.target.closest('.bal'); if(!b||G.lock) return;
+    if(b.dataset.w===t){ G.lock=true; b.classList.add('pop'); sfx.pop(); const r=b.getBoundingClientRect(); burst(r.left+r.width/2,r.top+r.height/2,18);
+      if(!G.miss){ G.hit++; tix(2); } else tix(1); G.i++; later(()=>{ G.lock=false; popRound(); },700); }
+    else { G.miss++; sfx.no(); b.classList.add('shake'); setTimeout(()=>{ b.classList.remove('shake'); b.classList.add('no'); },350); if(canSpeak) later(()=>speak(t),500); } };
+}
+
+/* ================= 5. SENTENCE SCRAMBLE ================= */
+function mixGame(){
+  const S=set(), src=(S.sentences.length?S.sentences:S.phrases).map(plain).filter(t=>t.split(/\s+/).length>=3);
+  if(!src.length){ toast('Add sentences first (✎ Edit words)'); return goHome(); }
+  G.list=shuffle(src).slice(0,Math.min(5,src.length)); G.i=0; mixRound();
+}
+function mixRound(){
+  if(G.i>=G.list.length) return endGame('🧩','Sentences fixed!',[]);
+  const sent=G.list[G.i], words=sent.split(/\s+/); G.words=words; G.pos=0; G.miss=0;
+  let order=shuffle(words.map((w,i)=>i)); if(order.every((v,i)=>v===i)) order.reverse();
+  $('#gInfo').textContent=`Sentence ${G.i+1} of ${G.list.length}`;
+  $('#board').innerHTML=`<div class="note">Tap the words in order to build the sentence.</div><div class="built" id="built"></div><div class="tiles" id="tiles">${order.map(i=>`<button class="tile" data-w="${esc(words[i])}">${hl(words[i])}</button>`).join('')}</div>`;
+  $('#tiles').onclick=e=>{ const b=e.target.closest('.tile'); if(!b||b.classList.contains('used')) return;
+    if(b.dataset.w===G.words[G.pos]){ b.classList.add('used'); $$('.tile.hint').forEach(x=>x.classList.remove('hint')); G.miss=0; sfx.tap();
+      $('#built').insertAdjacentHTML('beforeend',`<span>${hl(G.words[G.pos])}</span>`); G.pos++;
+      if(G.pos>=G.words.length){ tix(2); sfx.ok(); later(()=>askRead({k:'s',t:sent},()=>{ G.i++; later(mixRound,300); },'You built it! Now read it out loud'),600); } }
+    else { G.miss++; sfx.no(); b.classList.add('shake'); setTimeout(()=>b.classList.remove('shake'),350);
+      if(G.miss>=2){ const h=$$('.tile:not(.used)').find(x=>x.dataset.w===G.words[G.pos]); if(h) h.classList.add('hint'); } } };
+}
+
+/* ---------------- editor ---------------- */
+let E=null;
+function openEditor(){ E={id:set().id,del:0}; renderEditor(); show('edit'); $('#edit').scrollTop=0; }
+function renderEditor(){
+  const s=D.sets.find(x=>x.id===E.id)||set();
+  $('#ed').innerHTML=`
+  <div class="edTop"><h2>Edit words</h2><button class="eb save" id="eSave">Save changes</button><button class="eb" id="eBack">Done</button></div>
+  <section><h3>Word set</h3><div class="help">These are the same word sets as Fast Track. A change here shows up there too, on this computer.</div>
+    <div class="erow"><select id="eSel">${D.sets.map(x=>`<option value="${esc(x.id)}" ${x.id===s.id?'selected':''}>${esc(x.name)}</option>`).join('')}</select>
+      <button class="eb" id="eNew">+ New set</button><button class="eb" id="eDup">Copy this set</button><button class="eb danger" id="eDel">Delete set</button></div>
+    <div class="two"><div><label class="fl" for="eName">Set name</label><input type="text" id="eName" value="${esc(s.name)}"></div>
+      <div><label class="fl" for="eFocus">Letters to show in red <span>separate with commas</span></label><input type="text" id="eFocus" value="${esc(s.focus||'')}" placeholder="ou, ow"></div></div>
+    <label class="fl" for="eSkip">Words to leave black <span>where those letters make a different sound, like snow or country</span></label><input type="text" id="eSkip" value="${esc(s.skip||'')}">
+    <div class="two"><div><label class="fl" for="eWords">Words <span>one per line, hyphen between syllables: moun-tain</span></label><textarea id="eWords">${esc(s.words.join('\n'))}</textarea></div>
+      <div><label class="fl" for="ePhrases">Phrases <span>one per line</span></label><textarea id="ePhrases">${esc(s.phrases.join('\n'))}</textarea></div></div>
+    <label class="fl" for="eSents">Sentences <span>one per line</span></label><textarea id="eSents">${esc(s.sentences.join('\n'))}</textarea></section>
+  <section><h3>Lesson link</h3><div class="help">Puts this set into a link. Open it on any computer and the set loads there.</div>
+    <button class="eb" id="eShare">Copy lesson link</button><input type="text" id="shareOut" readonly></section>
+  <section><h3>Readers</h3><div class="help">Each reader keeps their own tickets.</div>
+    <div class="erow"><select id="eStu">${D.students.map(x=>`<option ${x===D.student?'selected':''}>${esc(x)}</option>`).join('')}</select><input type="text" id="eStuName" placeholder="New reader's name"><button class="eb" id="eStuAdd">+ Add reader</button></div></section>`;
+}
+function readForm(){
+  const s=D.sets.find(x=>x.id===E.id); if(!s) return;
+  const L=(id,re)=>$(id).value.split(re).map(x=>x.trim()).filter(Boolean);
+  s.name=$('#eName').value.trim()||'Untitled set'; s.focus=$('#eFocus').value.trim(); s.skip=$('#eSkip').value.trim();
+  s.words=L('#eWords',/[\n,]/); s.phrases=L('#ePhrases','\n'); s.sentences=L('#eSents','\n'); s.stories=s.stories||[];
+  D.cur=s.id; save();
+}
+$('#ed').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  switch(b.id){
+    case 'eSave': readForm(); toast('Saved'); renderEditor(); break;
+    case 'eBack': goHome(); break;
+    case 'eNew': { const s={id:'s'+Date.now(),name:'New set',focus:'',skip:'',words:[],phrases:[],sentences:[],stories:[]}; D.sets.push(s); D.cur=E.id=s.id; save(); renderEditor(); $('#eName').select(); break; }
+    case 'eDup': { readForm(); const s=clone(D.sets.find(x=>x.id===E.id)); s.id='s'+Date.now(); s.name+=' copy'; D.sets.push(s); D.cur=E.id=s.id; save(); renderEditor(); toast('Copied'); break; }
+    case 'eDel': if(D.sets.length<2){ toast('Keep at least one set'); break; } if(E.del!==1){ E.del=1; b.textContent='Tap again to delete'; break; }
+      D.sets=D.sets.filter(x=>x.id!==E.id); D.cur=E.id=D.sets[0].id; E.del=0; save(); renderEditor(); toast('Set deleted'); break;
+    case 'eShare': { readForm(); const url=location.href.split(/[?#]/)[0]+'?set='+btoa(unescape(encodeURIComponent(JSON.stringify(D.sets.find(x=>x.id===E.id))))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+      const o=$('#shareOut'); o.style.display='block'; o.value=url; o.select();
+      (navigator.clipboard?navigator.clipboard.writeText(url):Promise.reject()).then(()=>toast('Link copied'),()=>{ try{ document.execCommand('copy'); toast('Link copied'); }catch(err){ toast('Copy the link from the box'); } }); break; }
+    case 'eStuAdd': { const n=$('#eStuName').value.trim(); if(!n){ toast('Type a name first'); break; } if(!D.students.includes(n)) D.students.push(n); D.student=n; save(); renderEditor(); toast('Added '+n); break; }
+  }
+});
+$('#ed').addEventListener('change',e=>{ if(e.target.id==='eSel'){ E.id=e.target.value; D.cur=E.id; E.del=0; save(); renderEditor(); } if(e.target.id==='eStu'){ D.student=e.target.value; save(); } });
+
+/* ---------------- keys ---------------- */
+addEventListener('keydown',e=>{
+  if(e.target.matches&&e.target.matches('input,textarea,select')) return; if(e.repeat) return;
+  const k=e.key.toLowerCase(), main=e.code==='Space'||e.key==='Enter';
+  if(RD){ if(main){ e.preventDefault(); readOk(); } else if(k==='x'){ readNo(); } else if(k==='s'&&$('#rdSplit').style.display!=='none'){ RD.split=!RD.split; drawRead(); } else if(e.key==='Escape') goHome(); return; }
+  if(e.key==='Escape'){ if(!$('#home').classList.contains('on')) goHome(); return; }
+  if(G&&G.id==='kick'&&main){ e.preventDefault(); kickShoot(); }
+});
+addEventListener('click',()=>{ const a=document.activeElement; if(a&&a.tagName==='BUTTON') a.blur(); });
+addEventListener('resize',()=>{ if(RD) drawRead(); });
+renderHome();
+</script>
+</body>
+</html>
